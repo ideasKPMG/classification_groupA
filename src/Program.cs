@@ -39,9 +39,14 @@ namespace project1_0422
             Hashtable stopwordTable = new Hashtable();
             StreamReader stopFile = new StreamReader(path);
             string line;
+            string word;
+            Stemmer stemmer = new Stemmer();
             while ((line = stopFile.ReadLine()) != null)
             {
-                stopwordTable[line.Trim()] = 1;
+                stemmer.add(line.Trim().ToCharArray(), line.Length);
+                stemmer.stem();
+                word = stemmer.ToString();
+                stopwordTable[word.ToLower()] = 1;
             }
             stopFile.Close();
             return stopwordTable;
@@ -73,7 +78,7 @@ namespace project1_0422
             Dictionary<string, int> docWordCount = new Dictionary<string, int>();
             StreamReader docFile = new StreamReader(path);
             string line;
-            Stemmer stemmer = new Stemmer();
+
             while((line = docFile.ReadLine()) != null)
             {
                 if (line.Contains(": "))
@@ -86,31 +91,46 @@ namespace project1_0422
             }
             while ((line = docFile.ReadLine()) != null)
             {
-                foreach (string iter_word in Regex.Split(line, @"[^A-Za-z0-9_-]"))
+                foreach (string iter_word in splitLine(line))
                 {
-                    String word = iter_word.ToLower().Trim(new Char[] { '_', '-' });
-                    double Num;
-                    bool isNum = double.TryParse(word, out Num);
-                    if (isNum)
-                    {
-                        continue;
-                    }
-                    stemmer.add(word.ToCharArray(), word.Length);
-                    stemmer.stem();
-                    word = stemmer.ToString();
-                    if (word.Length == 0)
-                    {
-                        continue;
-                    }
-                    if (stopwordTable.ContainsKey(word))
-                    {
-                        continue;
-                    }
+                    string word = getWord(iter_word, stopwordTable);
                     //word cleansing done
-                    docWordCount[word]++;
+                    if (word != null)
+                    {
+                        docWordCount[word]++;
+                    }
                 }
             }
             return docWordCount;
+        }
+
+        private static IEnumerable<string> splitLine(string line)
+        {
+            return Regex.Split(line, @"[^A-Za-z0-9_-]");
+        }
+
+        private static string getWord(string word,Hashtable stopwordTable)
+        {
+            Stemmer stemmer = new Stemmer();
+            string result = word.ToLower().Trim(new Char[] { '_', '-' });
+            double Num;
+            bool isNum = double.TryParse(word, out Num);
+            if (isNum)
+            {
+                return null;
+            }
+            stemmer.add(result.ToCharArray(), result.Length);
+            stemmer.stem();
+            result = stemmer.ToString();
+            if (result.Length == 0)
+            {
+                return null;
+            }
+            if (stopwordTable.ContainsKey(result))
+            {
+                return null;
+            }
+            return result;
         }
     }
 }
