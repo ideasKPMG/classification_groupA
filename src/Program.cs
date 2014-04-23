@@ -19,7 +19,8 @@ namespace project1_0422
         public static Dictionary<string, int> weight = new Dictionary<string, int>()
         {
             {"subject",5},
-            {"word",1}
+            {"word",1},
+            {"email",1}
         };
         static void Main(string[] args)
         {
@@ -29,8 +30,8 @@ namespace project1_0422
             List<Dictionary<string, double>> wordIDFDictionary = new List<Dictionary<string, double>>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
             
-            trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\training",
-                       @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\log",
+            trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
+                       @"D:\work\KPMG\learning\classification\project1_0422\log",
                        ref docWordDicList,
                        ref dictionary,
                        ref trainingAnswer,
@@ -70,7 +71,7 @@ namespace project1_0422
         private static Dictionary<string, int> readCategory(string path,ref List<Dictionary<string, double>> docWordDicList,Hashtable stopwordTable)
         {
             Dictionary<string,int> categoryWordCount = new Dictionary<string,int>();
-            string[] docs = Directory.GetDirectories(path);
+            string[] docs = Directory.GetFiles(path);
             for (int i = 0; i < docs.Length; i++)
             {
                 readDoc(docs[i],stopwordTable);
@@ -90,7 +91,7 @@ namespace project1_0422
                 {
                     string column = getColumnName(line);
                     string content = getColumnContent(line);
-                    if(column == "subject")
+                    if (column == "subject")
                     {
                         foreach (string iter_word in splitLine(content))
                         {
@@ -98,30 +99,83 @@ namespace project1_0422
                             //word cleansing done
                             if (word != null)
                             {
-                                docWordCount[word] += weight["subject"];
+                                if (docWordCount.ContainsKey(word))
+                                {
+                                    docWordCount[word] += weight["subject"];
+                                }
+                                else
+                                {
+                                    docWordCount.Add(word, weight["subject"]);
+                                }
                             }
                         }
                     }
                 }
-                if (line.Length != 0)
+                else
                 {
-                    break;
+                    if (line.Length != 0)
+                    {
+                        break;
+                    }
                 }
             }
-            while ((line = docFile.ReadLine()) != null)
+            while (line != null)
             {
-                
+                line = processSpecialField(line,ref docWordCount);
                 foreach (string iter_word in splitLine(line))
                 {
                     string word = getWord(iter_word, stopwordTable);
                     //word cleansing done
                     if (word != null)
                     {
-                        docWordCount[word] += weight["word"];
+                        if (docWordCount.ContainsKey(word))
+                        {
+                            docWordCount[word] += weight["word"];
+                        }
+                        else
+                        {
+                            docWordCount.Add(word, weight["word"]);
+                        }
                     }
                 }
+                line = docFile.ReadLine();
             }
             return docWordCount;
+        }
+
+
+        private static string processSpecialField(string line, ref Dictionary<string, int> docWordCount)
+        {
+            string[] emails = getEmail(line);
+            string result;
+            for(int i=0;i<emails.Length;i++)
+            {
+                if (docWordCount.ContainsKey(emails[i]))
+                {
+                    docWordCount[emails[i]] += weight["email"];
+                }
+                else
+                {
+                    docWordCount.Add(emails[i], weight["email"]);
+                }
+            }
+            result = replaceEmail(line);
+            return result;
+        }
+
+        private static string replaceEmail(string line)
+        {
+            string replacement = " ";
+            Regex rgx = new Regex(@"\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*", RegexOptions.IgnoreCase);
+            string result = rgx.Replace(line, replacement);
+            return result;
+        }
+
+        private static string[] getEmail(string line)
+        {
+            Regex emailRegex = new Regex(@"\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*", RegexOptions.IgnoreCase);
+            MatchCollection emailMatches = emailRegex.Matches(line);
+            return emailMatches.Cast<Match>().Select(m => m.Value).ToArray();
         }
 
         private static string getColumnContent(string line)
