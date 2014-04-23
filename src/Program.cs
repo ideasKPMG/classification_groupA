@@ -16,11 +16,11 @@ namespace project1_0422
 {
     class Program
     {
-        public static Dictionary<string, int> weight = new Dictionary<string, int>()
+        public static Dictionary<string, double> weight = new Dictionary<string, double>()
         {
-            {"subject",5},
-            {"word",1},
-            {"email",1}
+            {"subject",5.0},
+            {"word",1.0},
+            {"email",1.0}
         };
         static void Main(string[] args)
         {
@@ -60,28 +60,28 @@ namespace project1_0422
 
         private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, double> dictionary, ref List<int> trainingAnswer, ref List<Dictionary<string, double>> wordIDFDictionary,Hashtable stopwordTable)
         {
-            List<Dictionary<string, int>> categoryWordCount = new List<Dictionary<string, int>>();
+            List<Dictionary<string, double>> categoryWordCountList = new List<Dictionary<string, double>>();
             string[] categories = Directory.GetDirectories(trainPath);
             for (int i = 0; i < categories.Length; i++) //traverse Categories
             {
-                categoryWordCount.Add(readCategory(categories[i], ref docWordDicList, stopwordTable));
+                categoryWordCountList.Add(readCategory(categories[i], ref docWordDicList, stopwordTable));
             }
         }
 
-        private static Dictionary<string, int> readCategory(string path,ref List<Dictionary<string, double>> docWordDicList,Hashtable stopwordTable)
+        private static Dictionary<string, double> readCategory(string path,ref List<Dictionary<string, double>> docWordDicList,Hashtable stopwordTable)
         {
-            Dictionary<string,int> categoryWordCount = new Dictionary<string,int>();
+            Dictionary<string,double> categoryWordCount = new Dictionary<string,double>();
             string[] docs = Directory.GetFiles(path);
             for (int i = 0; i < docs.Length; i++)
             {
-                readDoc(docs[i],stopwordTable);
+                docWordDicList.Add(readDoc(docs[i],stopwordTable));
             }
             return categoryWordCount;
         }
 
-        private static Dictionary<string, int> readDoc(string path,Hashtable stopwordTable)
+        private static Dictionary<string, double> readDoc(string path,Hashtable stopwordTable)
         {
-            Dictionary<string, int> docWordCount = new Dictionary<string, int>();
+            Dictionary<string, double> docWordCount = new Dictionary<string, double>();
             StreamReader docFile = new StreamReader(path);
             string line;
 
@@ -144,7 +144,7 @@ namespace project1_0422
         }
 
 
-        private static string processSpecialField(string line, ref Dictionary<string, int> docWordCount)
+        private static string processSpecialField(string line, ref Dictionary<string, double> docWordCount)
         {
             string[] emails = getEmail(line);
             string result;
