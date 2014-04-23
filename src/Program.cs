@@ -16,6 +16,11 @@ namespace project1_0422
 {
     class Program
     {
+        public static Dictionary<string, int> weight = new Dictionary<string, int>()
+        {
+            {"subject",5},
+            {"word",1}
+        };
         static void Main(string[] args)
         {
             List<Dictionary<string, double>> docWordDicList = new List<Dictionary<string, double>>();
@@ -81,8 +86,22 @@ namespace project1_0422
 
             while((line = docFile.ReadLine()) != null)
             {
-                if (line.Contains(": "))
+                if (isColumn(line))
                 {
+                    string column = getColumnName(line);
+                    string content = getColumnContent(line);
+                    if(column == "subject")
+                    {
+                        foreach (string iter_word in splitLine(content))
+                        {
+                            string word = getWord(iter_word, stopwordTable);
+                            //word cleansing done
+                            if (word != null)
+                            {
+                                docWordCount[word] += weight["subject"];
+                            }
+                        }
+                    }
                 }
                 if (line.Length != 0)
                 {
@@ -91,17 +110,41 @@ namespace project1_0422
             }
             while ((line = docFile.ReadLine()) != null)
             {
+                
                 foreach (string iter_word in splitLine(line))
                 {
                     string word = getWord(iter_word, stopwordTable);
                     //word cleansing done
                     if (word != null)
                     {
-                        docWordCount[word]++;
+                        docWordCount[word] += weight["word"];
                     }
                 }
             }
             return docWordCount;
+        }
+
+        private static string getColumnContent(string line)
+        {
+            string[] part = line.Split(new string[] { ": " }, StringSplitOptions.None);
+            return part[part.Length - 1].Trim();
+        }
+
+        private static string getColumnName(string line)
+        {
+            return line.Split(new string[] { ": " }, StringSplitOptions.None)[0].Trim().ToLower();
+        }
+
+        private static bool isColumn(string line)
+        {
+            if (line.Contains(": "))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private static IEnumerable<string> splitLine(string line)
