@@ -27,7 +27,7 @@ namespace project1_0422
             List<Dictionary<string, double>> docWordDicList = new List<Dictionary<string, double>>();
             Dictionary<string, double> dictionary = new Dictionary<string, double>();
             List<int> trainingAnswer = new List<int>();
-            List<Dictionary<string, double>> wordIDFDictionary = new List<Dictionary<string, double>>();
+            Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
             
             trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
@@ -58,7 +58,7 @@ namespace project1_0422
             return stopwordTable;
         }
 
-        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, double> dictionary, ref List<int> trainingAnswer, ref List<Dictionary<string, double>> wordIDFDictionary,Hashtable stopwordTable)
+        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, double> dictionary, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary,Hashtable stopwordTable)
         {
             List<Dictionary<string, double>> categoryWordCountList = new List<Dictionary<string, double>>();
             string[] categories = Directory.GetDirectories(trainPath);
@@ -66,15 +66,47 @@ namespace project1_0422
             {
                 categoryWordCountList.Add(readCategory(categories[i], ref docWordDicList, stopwordTable));
             }
+            for(int i=0;i<categoryWordCountList.Count();i++)
+            {
+                foreach (string word in categoryWordCountList[i].Keys)
+                {
+                    if (wordIDFDictionary.ContainsKey(word))
+                    {
+                        wordIDFDictionary[word] += 1;
+                    }
+                    else 
+                    {
+                        wordIDFDictionary.Add(word, 1);
+                    }
+                }
+            }
+            string[] keys = wordIDFDictionary.Keys.ToArray();
+            for (int i = 0; i < keys.Length;i++ )
+            {
+                wordIDFDictionary[keys[i]] = Math.Log(categoryWordCountList.Count() / wordIDFDictionary[keys[i]]);
+            }
         }
 
         private static Dictionary<string, double> readCategory(string path,ref List<Dictionary<string, double>> docWordDicList,Hashtable stopwordTable)
         {
             Dictionary<string,double> categoryWordCount = new Dictionary<string,double>();
+            Dictionary<string, double> docWordCount = new Dictionary<string, double>();
             string[] docs = Directory.GetFiles(path);
             for (int i = 0; i < docs.Length; i++)
             {
-                docWordDicList.Add(readDoc(docs[i],stopwordTable));
+                docWordCount = readDoc(docs[i], stopwordTable);
+                docWordDicList.Add(docWordCount);
+                foreach (string word in docWordCount.Keys)
+                {
+                    if (categoryWordCount.ContainsKey(word))
+                    {
+                        categoryWordCount[word] += docWordCount[word];
+                    }
+                    else
+                    {
+                        categoryWordCount.Add(word, docWordCount[word]);
+                    }
+                }
             }
             return categoryWordCount;
         }
