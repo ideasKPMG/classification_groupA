@@ -25,15 +25,16 @@ namespace project1_0422
         static void Main(string[] args)
         {
             List<Dictionary<string, double>> docWordDicList = new List<Dictionary<string, double>>();
-            Dictionary<string, double> dictionary = new Dictionary<string, double>();
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
             List<int> trainingAnswer = new List<int>();
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
-            
+            int dicSize = 5000;
             trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
                        @"D:\work\KPMG\learning\classification\project1_0422\log",
                        ref docWordDicList,
                        ref dictionary,
+                       dicSize,
                        ref trainingAnswer,
                        ref wordIDFDictionary,
                        stopWordTable
@@ -58,13 +59,13 @@ namespace project1_0422
             return stopwordTable;
         }
 
-        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, double> dictionary, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary,Hashtable stopwordTable)
+        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, int> dictionary,int dicSize, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary,Hashtable stopwordTable)
         {
             List<Dictionary<string, double>> categoryWordCountList = new List<Dictionary<string, double>>();
             string[] categories = Directory.GetDirectories(trainPath);
-            for (int i = 0; i < categories.Length; i++) //traverse Categories
+            for (int i = 0; i < categories.Length; i++) //traverse Categories, generate traingAnswer
             {
-                categoryWordCountList.Add(readCategory(categories[i], ref docWordDicList, stopwordTable));
+                categoryWordCountList.Add(readCategory(categories[i],i, ref docWordDicList, ref trainingAnswer, stopwordTable));
             }
             for(int i=0;i<categoryWordCountList.Count();i++)
             {
@@ -81,19 +82,76 @@ namespace project1_0422
                 }
             }
             string[] keys = wordIDFDictionary.Keys.ToArray();
-            for (int i = 0; i < keys.Length;i++ )
+
+            // generate wordIDFDictionary
+            for (int i = 0; i < keys.Length;i++ ) 
             {
                 wordIDFDictionary[keys[i]] = Math.Log(categoryWordCountList.Count() / wordIDFDictionary[keys[i]]);
             }
-        }
 
-        private static Dictionary<string, double> readCategory(string path,ref List<Dictionary<string, double>> docWordDicList,Hashtable stopwordTable)
+            // generate dictionary
+            List<List<KeyValuePair<string, double>>> sortedCategoryTFIDFList = new List<List<KeyValuePair<string, double>>>();
+            int dicCount = 0;
+            for (int i = 0; i < categoryWordCountList.Count(); i++)
+            {
+                string[] words = categoryWordCountList[i].Keys.ToArray();
+                double categoryWordCountSum = 0;
+                List<KeyValuePair<string, double>> sortedCategoryTFIDF = new List<KeyValuePair<string, double>>();
+                for (int j = 0; j < words.Length; j++)
+                {
+                    categoryWordCountSum += categoryWordCountList[i][words[j]];
+                }
+                for (int j = 0; j < words.Length; j++)
+                {
+                    categoryWordCountList[i][words[j]] = (categoryWordCountList[i][words[j]] / categoryWordCountSum) * wordIDFDictionary[words[j]];//category TFIDF
+                }
+                sortedCategoryTFIDF = categoryWordCountList[i].ToList();
+                sortedCategoryTFIDF.Sort((a,b) => b.Value.CompareTo(a.Value));
+                sortedCategoryTFIDFList.Add(sortedCategoryTFIDF);
+            }
+            for (int i = 0; i < dicSize; i++)
+            {
+                for (int j = 0; j < sortedCategoryTFIDFList.Count(); j++)
+                {
+                    if (dicCount >= dicSize)
+                    {
+                        break;
+                    }
+                    if (!dictionary.ContainsKey(sortedCategoryTFIDFList[j][i].Key))
+                    {
+                        dictionary.Add(sortedCategoryTFIDFList[j][i].Key, dicCount);
+                        dicCount++;
+                    }
+                }
+                if (dicCount >= dicSize)
+                {
+                    break;
+                }
+            }
+
+            //generate docWordDicList
+            for (int i = 0; i < docWordDicList.Count(); i++)
+            {
+                string[] words = docWordDicList[i].Keys.ToArray();
+                double docWordCountSum = 0;
+                for (int j = 0; j < words.Length; j++)
+                {
+                    docWordCountSum += docWordDicList[i][words[j]];
+                }
+                for (int j = 0; j < words.Length; j++)
+                {
+                    docWordDicList[i][words[j]] =  docWordDicList[i][words[j]] / docWordCountSum * wordIDFDictionary[words[j]];//docWordDic TFIDF
+                }
+            }
+        }
+        private static Dictionary<string, double> readCategory(string path,int categoryIndex,ref List<Dictionary<string, double>> docWordDicList,ref List<int> trainingAnswer,Hashtable stopwordTable)
         {
             Dictionary<string,double> categoryWordCount = new Dictionary<string,double>();
             Dictionary<string, double> docWordCount = new Dictionary<string, double>();
             string[] docs = Directory.GetFiles(path);
             for (int i = 0; i < docs.Length; i++)
             {
+                trainingAnswer.Add(categoryIndex);
                 docWordCount = readDoc(docs[i], stopwordTable);
                 docWordDicList.Add(docWordCount);
                 foreach (string word in docWordCount.Keys)
