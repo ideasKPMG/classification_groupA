@@ -39,6 +39,10 @@ namespace project1_0422
                        ref wordIDFDictionary,
                        stopWordTable
                 );
+            KNN knn = new KNN();
+            knn.set(3, 20, dicSize,docWordDicList.Count());
+            knn.initial(docWordDicList,dictionary,trainingAnswer,wordIDFDictionary);
+            knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
         }
 
         private static Hashtable genStopwordTable(string path)
