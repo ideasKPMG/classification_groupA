@@ -29,6 +29,7 @@ namespace project1_0422
             List<int> trainingAnswer = new List<int>();
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
+            List<string> testFileNameList = new List<string>();
             int dicSize = 5000;
             trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
                        @"D:\work\KPMG\learning\classification\project1_0422\log",
@@ -43,20 +44,56 @@ namespace project1_0422
             knn.set(dicSize,docWordDicList.Count());
             knn.initial(docWordDicList,dictionary,trainingAnswer);
             knn.train(3, 20);
-            List<int> testAnswer = runKnnTest(knn, @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing", @"D:\work\KPMG\learning\classification\project1_0422\test_data\log", dictionary, wordIDFDictionary, stopWordTable);
             //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
+            List<KeyValuePair<int,int>> testAnswer = runKnnTest(knn, @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing", @"D:\work\KPMG\learning\classification\project1_0422\test_data\log", dictionary, wordIDFDictionary, stopWordTable,ref testFileNameList);
+            genStatistic(testAnswer, testFileNameList , @"D:\work\KPMG\learning\classification\project1_0422\log");
         }
 
-        private static List<int> runKnnTest(KNN knn, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable)
+        private static void genStatistic(List<KeyValuePair<int, int>> testAnswer, List<string> testFileNameList, string logPath)
+        {
+            StreamWriter resultFile = new StreamWriter(logPath + "\\result.csv");
+            double totalCorrectCount = 0;
+            double totalCount = 0;
+            double categoryCorrectCount = 0;
+            double categoryCount = 0;
+            int last = 0;
+            StreamWriter statisticFile = new StreamWriter(logPath + "\\statistic.csv");
+            for (int i = 0; i < testAnswer.Count(); i++)
+            {
+                if (testAnswer[i].Value != last)
+                {
+                    statisticFile.WriteLine(last+","+categoryCorrectCount/categoryCount);
+                    categoryCount = 0;
+                    categoryCorrectCount = 0;
+                    last = testAnswer[i].Value;
+                }
+                totalCount += 1;
+                categoryCount += 1;
+                totalCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
+                categoryCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
+                resultFile.WriteLine(testAnswer[i].Key+","+testAnswer[i].Value+","+((testAnswer[i].Key == testAnswer[i].Value)?1:0));
+            }
+            statisticFile.WriteLine((last+1) + "," + categoryCorrectCount / categoryCount);
+            statisticFile.WriteLine("total," + totalCorrectCount/totalCount);
+            resultFile.Close();
+            statisticFile.Close();
+        }
+
+        private static List<KeyValuePair<int,int>> runKnnTest(KNN knn, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable,ref List<string> testFileNameList)
         {
             string[] categories = Directory.GetDirectories(testPath);
-            List<int> testAnswer = new List<int>();
+            List<KeyValuePair<int, int>> testAnswer = new List<KeyValuePair<int, int>>();
             for (int i = 0; i < categories.Length; i++) //traverse Categories
             {
+                Console.WriteLine(categories[i]);
                 string[] files = Directory.GetFiles(categories[i]);
                 for (int j = 0; j < files.Length; j++)
                 {
-                    testAnswer.Add(knn.test(readDoc(files[j],stopWordTable),dictionary,wordIDFDictionary));
+                    int testResult = -1;
+                    testFileNameList.Add(Path.GetFileName(files[i]));
+                    testResult = knn.test(readDoc(files[j],stopWordTable),dictionary,wordIDFDictionary);
+                    testAnswer.Add(new KeyValuePair<int,int>(testResult,i));
+                    Console.WriteLine(testResult+","+i);
                 }
             }
             return testAnswer;
