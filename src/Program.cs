@@ -18,9 +18,12 @@ namespace project1_0422
     {
         public static Dictionary<string, double> weight = new Dictionary<string, double>()
         {
-            {"subject",5.0},
+            {"subject",1.0},
             {"word",1.0},
-            {"email",1.0}
+            {"email",1.0},
+            {"path",1.0},
+            {"newsgroups",1.0},
+            {"from",1.0}
         };
         static void Main(string[] args)
         {
@@ -44,6 +47,8 @@ namespace project1_0422
             knn.set(dicSize,docWordDicList.Count());
             knn.initial(docWordDicList,dictionary,trainingAnswer);
             knn.train(3, 20);
+            knn.getAveDistance();
+
             //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
             List<KeyValuePair<int,int>> testAnswer = runKnnTest(knn, @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing", @"D:\work\KPMG\learning\classification\project1_0422\test_data\log", dictionary, wordIDFDictionary, stopWordTable,ref testFileNameList);
             genStatistic(testAnswer, testFileNameList , @"D:\work\KPMG\learning\classification\project1_0422\log");
@@ -71,9 +76,9 @@ namespace project1_0422
                 categoryCount += 1;
                 totalCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
                 categoryCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
-                resultFile.WriteLine(testAnswer[i].Key+","+testAnswer[i].Value+","+((testAnswer[i].Key == testAnswer[i].Value)?1:0));
+                resultFile.WriteLine(testFileNameList[i]+ "," + testAnswer[i].Key + "," + testAnswer[i].Value + "," + ((testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0));
             }
-            statisticFile.WriteLine((last+1) + "," + categoryCorrectCount / categoryCount);
+            statisticFile.WriteLine(last + "," + categoryCorrectCount / categoryCount);
             statisticFile.WriteLine("total," + totalCorrectCount/totalCount);
             resultFile.Close();
             statisticFile.Close();
@@ -90,7 +95,7 @@ namespace project1_0422
                 for (int j = 0; j < files.Length; j++)
                 {
                     int testResult = -1;
-                    testFileNameList.Add(Path.GetFileName(files[i]));
+                    testFileNameList.Add(Path.GetFileName(files[j]));
                     testResult = knn.test(readDoc(files[j],stopWordTable),dictionary,wordIDFDictionary);
                     testAnswer.Add(new KeyValuePair<int,int>(testResult,i));
                     Console.WriteLine(testResult+","+i);
@@ -258,6 +263,83 @@ namespace project1_0422
                             }
                         }
                     }
+                    else if (column == "path")
+                    {
+                        foreach (string iter_word in splitPath(content))
+                        {
+                            string word = getWord(iter_word, stopwordTable);
+                            //word cleansing done
+                            if (word != null)
+                            {
+                                if (docWordCount.ContainsKey(word))
+                                {
+                                    docWordCount[word] += weight["path"];
+                                }
+                                else
+                                {
+                                    docWordCount.Add(word, weight["path"]);
+                                }
+                            }
+                        }
+                    }
+                    else if (column == "newsgroups")
+                    {
+                        foreach (string iter_word in splitNewsgroup(content))
+                        {
+                            string word = getWord(iter_word, stopwordTable);
+                            //word cleansing done
+                            if (word != null)
+                            {
+                                if (docWordCount.ContainsKey(word))
+                                {
+                                    docWordCount[word] += weight["newsgroups"];
+                                }
+                                else
+                                {
+                                    docWordCount.Add(word, weight["newsgroups"]);
+                                }
+                            }
+                        }
+                    }
+                    else if (column == "from")
+                    {
+                        foreach (string iter_word in getEmail(content))
+                        {
+                            string word = getWord(iter_word, stopwordTable);
+                            //word cleansing done
+                            if (word != null)
+                            {
+                                if (docWordCount.ContainsKey(word))
+                                {
+                                    docWordCount[word] += weight["from"];
+                                }
+                                else
+                                {
+                                    docWordCount.Add(word, weight["from"]);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        content = processSpecialField(content, ref docWordCount);
+                        foreach (string iter_word in splitLine(content))
+                        {
+                            string word = getWord(iter_word, stopwordTable);
+                            //word cleansing done
+                            if (word != null)
+                            {
+                                if (docWordCount.ContainsKey(word))
+                                {
+                                    docWordCount[word] += weight["word"];
+                                }
+                                else
+                                {
+                                    docWordCount.Add(word, weight["word"]);
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
@@ -289,6 +371,16 @@ namespace project1_0422
                 line = docFile.ReadLine();
             }
             return docWordCount;
+        }
+
+        private static IEnumerable<string> splitNewsgroup(string content)
+        {
+            return content.Split(new char[]{','});
+        }
+
+        private static IEnumerable<string> splitPath(string content)
+        {
+            return content.Split(new char[]{'!'});
         }
 
 
@@ -351,7 +443,7 @@ namespace project1_0422
 
         private static IEnumerable<string> splitLine(string line)
         {
-            return Regex.Split(line, @"[^A-Za-z0-9_-]");
+            return Regex.Split(line, @"[^A-Za-z0-9_\-\.]");
         }
 
         private static string getWord(string word,Hashtable stopwordTable)

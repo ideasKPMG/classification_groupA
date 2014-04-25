@@ -42,6 +42,72 @@ namespace project1_0422
                 }
             }
         }
+
+        internal List<double[]> getCenter()
+        {
+            List<double[]> centerList = new List<double[]>();
+            int last = 0;
+            double[] center = new double[featureSize];
+            int categoryDocCount = 0;
+            for (int i = 0; i < docSize; i++)
+            {
+                if (answer[i] != last)
+                {
+                    for (int j = 0; j < featureSize; j++)
+                    {
+                        center[j] = center[j] / categoryDocCount;
+                    }
+                    centerList.Add(center);
+                    center = new double[featureSize];
+                    for (int j = 0; j < featureSize; j++)
+                    {
+                        center[j] = 0;
+                    }
+                    categoryDocCount = 0;
+                    last = answer[i];
+                }
+                for (int j = 0; j < featureSize; j++)
+                {
+                    center[j] += feature[i][j];
+                }
+                categoryDocCount++;
+            }
+            for (int j = 0; j < featureSize; j++)
+            {
+                center[j] = center[j] / categoryDocCount;
+            }
+            centerList.Add(center);
+            return centerList;
+        }
+
+        internal List<double> getAveDistance()
+        {
+            List<double[]> centerList = getCenter();
+            List<double> aveDistanceList = new List<double>();
+            int last = 0;
+            double distance=0;
+            double categoryDocCount = 0;
+            double categoryDistanceSum = 0;
+            for (int i = 0; i < docSize; i++)
+            {
+                if (answer[i] != last)
+                {
+                    aveDistanceList.Add(categoryDistanceSum/categoryDocCount);
+                    categoryDocCount = 0;
+                    categoryDistanceSum = 0;
+                    last = answer[i];
+                }
+                double powTemp = 0;
+                for (int j = 0; j < featureSize; j++)
+                {
+                    powTemp += Math.Pow(feature[i][j] - centerList[last][j],2);
+                }
+                categoryDistanceSum += Math.Sqrt(powTemp);
+                categoryDocCount++;
+            }
+            aveDistanceList.Add(categoryDistanceSum / categoryDocCount);
+            return aveDistanceList;
+        }
         internal void genLog(string logPath)
         {
             StreamWriter logFile = new StreamWriter(logPath + "\\0.csv");
