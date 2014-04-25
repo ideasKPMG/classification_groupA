@@ -40,9 +40,26 @@ namespace project1_0422
                        stopWordTable
                 );
             KNN knn = new KNN();
-            knn.set(3, 20, dicSize,docWordDicList.Count());
-            knn.initial(docWordDicList,dictionary,trainingAnswer,wordIDFDictionary);
-            knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
+            knn.set(dicSize,docWordDicList.Count());
+            knn.initial(docWordDicList,dictionary,trainingAnswer);
+            knn.train(3, 20);
+            List<int> testAnswer = runKnnTest(knn, @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing", @"D:\work\KPMG\learning\classification\project1_0422\test_data\log", dictionary, wordIDFDictionary, stopWordTable);
+            //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
+        }
+
+        private static List<int> runKnnTest(KNN knn, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable)
+        {
+            string[] categories = Directory.GetDirectories(testPath);
+            List<int> testAnswer = new List<int>();
+            for (int i = 0; i < categories.Length; i++) //traverse Categories
+            {
+                string[] files = Directory.GetFiles(categories[i]);
+                for (int j = 0; j < files.Length; j++)
+                {
+                    testAnswer.Add(knn.test(readDoc(files[j],stopWordTable),dictionary,wordIDFDictionary));
+                }
+            }
+            return testAnswer;
         }
 
         private static Hashtable genStopwordTable(string path)
