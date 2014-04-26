@@ -33,7 +33,7 @@ namespace project1_0422
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
             List<string> testFileNameList = new List<string>();
-            int dicSize = 5000;
+            int dicSize = 40;
             trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
                        @"D:\work\KPMG\learning\classification\project1_0422\log",
                        ref docWordDicList,
@@ -154,6 +154,7 @@ namespace project1_0422
 
             // generate dictionary
             List<List<KeyValuePair<string, double>>> sortedCategoryTFIDFList = new List<List<KeyValuePair<string, double>>>();
+            StreamWriter dicFile = new StreamWriter(logPath + "\\" + "dictionary.csv");
             int dicCount = 0;
             for (int i = 0; i < categoryWordCountList.Count(); i++)
             {
@@ -182,12 +183,14 @@ namespace project1_0422
                     }
                     if (!dictionary.ContainsKey(sortedCategoryTFIDFList[j][i].Key))
                     {
+                        dicFile.WriteLine(sortedCategoryTFIDFList[j][i].Key + "," + sortedCategoryTFIDFList[j][i].Value);
                         dictionary.Add(sortedCategoryTFIDFList[j][i].Key, dicCount);
                         dicCount++;
                     }
                 }
                 if (dicCount >= dicSize)
                 {
+                    dicFile.Close();
                     break;
                 }
             }
@@ -203,7 +206,10 @@ namespace project1_0422
                 }
                 for (int j = 0; j < words.Length; j++)
                 {
-                    docWordDicList[i][words[j]] =  docWordDicList[i][words[j]] / docWordCountSum * wordIDFDictionary[words[j]];//docWordDic TFIDF
+                    if (docWordDicList[i][words[j]] != 0)
+                    {
+                        docWordDicList[i][words[j]] = (docWordDicList[i][words[j]] / docWordCountSum) * wordIDFDictionary[words[j]];//docWordDic TFIDF
+                    }
                 }
             }
         }
@@ -221,11 +227,17 @@ namespace project1_0422
                 {
                     if (categoryWordCount.ContainsKey(word))
                     {
-                        categoryWordCount[word] += docWordCount[word];
+                        if (docWordCount[word] != 0)
+                        {
+                            categoryWordCount[word] += docWordCount[word];
+                        }
                     }
                     else
                     {
-                        categoryWordCount.Add(word, docWordCount[word]);
+                        if (docWordCount[word] != 0)
+                        {
+                            categoryWordCount.Add(word, docWordCount[word]);
+                        }
                     }
                 }
             }
@@ -345,6 +357,7 @@ namespace project1_0422
                 {
                     if (line.Length != 0)
                     {
+                        //return docWordCount;
                         break;
                     }
                 }
