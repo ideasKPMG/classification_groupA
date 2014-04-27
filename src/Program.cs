@@ -33,7 +33,7 @@ namespace project1_0422
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
             List<string> testFileNameList = new List<string>();
-            int dicSize = 40;
+            int dicSize = 1000;
             trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
                        @"D:\work\KPMG\learning\classification\project1_0422\log",
                        ref docWordDicList,
@@ -125,11 +125,14 @@ namespace project1_0422
         private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, int> dictionary,int dicSize, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary,Hashtable stopwordTable)
         {
             List<Dictionary<string, double>> categoryWordCountList = new List<Dictionary<string, double>>();
+            Dictionary<string, int> tempDictionary = new Dictionary<string, int>();
             string[] categories = Directory.GetDirectories(trainPath);
             for (int i = 0; i < categories.Length; i++) //traverse Categories, generate traingAnswer
             {
                 categoryWordCountList.Add(readCategory(categories[i],i, ref docWordDicList, ref trainingAnswer, stopwordTable));
             }
+
+            // generate wordIDFDictionary
             for(int i=0;i<categoryWordCountList.Count();i++)
             {
                 foreach (string word in categoryWordCountList[i].Keys)
@@ -145,8 +148,6 @@ namespace project1_0422
                 }
             }
             string[] keys = wordIDFDictionary.Keys.ToArray();
-
-            // generate wordIDFDictionary
             for (int i = 0; i < keys.Length;i++ ) 
             {
                 wordIDFDictionary[keys[i]] = Math.Log(categoryWordCountList.Count() / wordIDFDictionary[keys[i]]);
@@ -167,34 +168,34 @@ namespace project1_0422
                 }
                 for (int j = 0; j < words.Length; j++)
                 {
-                    categoryWordCountList[i][words[j]] = (categoryWordCountList[i][words[j]] / categoryWordCountSum) * wordIDFDictionary[words[j]];//category TFIDF
+                    sortedCategoryTFIDF.Add(new KeyValuePair<string,double>(words[j],(categoryWordCountList[i][words[j]] / categoryWordCountSum) * wordIDFDictionary[words[j]]));//category TFIDF
                 }
-                sortedCategoryTFIDF = categoryWordCountList[i].ToList();
+                //sortedCategoryTFIDF = categoryWordCountList[i].ToList();
                 sortedCategoryTFIDF.Sort((a,b) => b.Value.CompareTo(a.Value));
                 sortedCategoryTFIDFList.Add(sortedCategoryTFIDF);
             }
-            for (int i = 0; i < dicSize; i++)
+            for (int i = 0; i < dicSize*2; i++)
             {
                 for (int j = 0; j < sortedCategoryTFIDFList.Count(); j++)
                 {
-                    if (dicCount >= dicSize)
+                    if (dicCount >= dicSize*2)
                     {
                         break;
                     }
-                    if (!dictionary.ContainsKey(sortedCategoryTFIDFList[j][i].Key))
+                    if (!tempDictionary.ContainsKey(sortedCategoryTFIDFList[j][i].Key))
                     {
                         dicFile.WriteLine(sortedCategoryTFIDFList[j][i].Key + "," + sortedCategoryTFIDFList[j][i].Value);
-                        dictionary.Add(sortedCategoryTFIDFList[j][i].Key, dicCount);
+                        tempDictionary.Add(sortedCategoryTFIDFList[j][i].Key, dicCount);
                         dicCount++;
                     }
                 }
-                if (dicCount >= dicSize)
+                if (dicCount >= dicSize*2)
                 {
                     dicFile.Close();
                     break;
                 }
             }
-
+            dictionary = coOccurrence(ref categoryWordCountList, ref docWordDicList, ref wordIDFDictionary, tempDictionary, dicSize);
             //generate docWordDicList
             for (int i = 0; i < docWordDicList.Count(); i++)
             {
@@ -212,6 +213,80 @@ namespace project1_0422
                     }
                 }
             }
+        }
+
+        private static Dictionary<string, int> coOccurrence(ref List<Dictionary<string, double>> categoryWordCountList, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, double> wordIDFDictionary, Dictionary<string, int> tempDictionary, int dicSize)
+        {
+            Dictionary<string, int> dictionary = new Dictionary<string, int>();
+            //add co-word to docWordDicList
+            for (int i = 0; i < docWordDicList.Count(); i++)
+            {
+                string[] words = docWordDicList[i].Keys.ToArray();
+                for (int j = 0; j < words.Length; j++)
+                {
+                    if (tempDictionary.ContainsKey(words[j]))
+                    {
+                        for (int k = 0; k < words.Length; k++)
+                        {
+                            if (j != k)
+                            {
+                                if (tempDictionary.ContainsKey(words[k]))
+                                {
+                                    docWordDicList[i].Add(words[j] + " " + words[k], docWordDicList[i][words[j]]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //add co-word to categoryWordCountList
+            for (int i = 0; i < categoryWordCountList.Count(); i++)
+            {
+                string[] words = categoryWordCountList[i].Keys.ToArray();
+                for (int j = 0; j < words.Length; j++)
+                {
+                    if (tempDictionary.ContainsKey(words[j]))
+                    {
+                        for (int k = 0; k < words.Length; k++)
+                        {
+                            if (j != k)
+                            {
+                                if (tempDictionary.ContainsKey(words[k]))
+                                {
+                                    categoryWordCountList[i].Add(words[j] + " " + words[k], categoryWordCountList[i][words[j]]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //add co-word to wordIDFDictionary
+            for (int i = 0; i < categoryWordCountList.Count(); i++)
+            {
+                foreach (string word in categoryWordCountList[i].Keys)
+                {
+                    if (word.Contains(' '))
+                    {
+                        if (wordIDFDictionary.ContainsKey(word))
+                        {
+                            wordIDFDictionary[word] += 1;
+                        }
+                        else
+                        {
+                            wordIDFDictionary.Add(word, 1);
+                        }
+                    }
+                }
+            }
+            string[] keys = wordIDFDictionary.Keys.ToArray();
+            for (int i = 0; i < keys.Length; i++)
+            {
+                if (keys[i].Contains(' '))
+                {
+                    wordIDFDictionary[keys[i]] = Math.Log(categoryWordCountList.Count() / wordIDFDictionary[keys[i]]);
+                }
+            }
+            return dictionary;
         }
         private static Dictionary<string, double> readCategory(string path,int categoryIndex,ref List<Dictionary<string, double>> docWordDicList,ref List<int> trainingAnswer,Hashtable stopwordTable)
         {
