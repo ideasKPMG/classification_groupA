@@ -1,4 +1,7 @@
-﻿using System;
+#define KNN_MODE
+#define USE_POSTAG
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,11 +14,20 @@ using Accord.Controls;
 using Accord.MachineLearning;
 using Accord.Math;
 using Accord.Statistics;
+using libsvm;
 
 namespace project1_0422
 {
     class Program
     {
+        public static String STOP_WORD_PATH = @"F:\Work\Traning\DataMining\stopword.txt";
+        public static String TRAINING_DATA_DIR = @"F:\Work\Traning\DataMining\test_data\1\Training";
+        public static String TEST_DATA_DIR = @"F:\Work\Traning\DataMining\test_data\1\Testing";
+
+        public static String LOG_DIR = @"F:\Work\Traning\DataMining\Log";
+        public static String TEST_LOG_DIR = @"F:\Work\Traning\DataMining\Log\test_data\log";
+        public static String NLP_MODEL_PATH = @"F:\Work\Traning\DataMining\sharpnlp\SharpNLP-1.0.2529-Bin\Models";
+
         public static Dictionary<string, double> weight = new Dictionary<string, double>()
         {
             {"subject",1.0},
@@ -31,27 +43,43 @@ namespace project1_0422
             Dictionary<string, int> dictionary = new Dictionary<string, int>();
             List<int> trainingAnswer = new List<int>();
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
-            Hashtable stopWordTable = genStopwordTable(@"D:\work\KPMG\learning\project1\stopword.txt");
+            Hashtable stopWordTable = genStopwordTable(STOP_WORD_PATH);
             List<string> testFileNameList = new List<string>();
             int dicSize = 100;
-            trainModel(@"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training",
-                       @"D:\work\KPMG\learning\classification\project1_0422\log",
+
+            Console.WriteLine("==> Starting prepare data...");
+            NLPAdapter nlpAdapter = new NLPAdapter(NLP_MODEL_PATH);
+
+            trainModel(TRAINING_DATA_DIR,
+                       LOG_DIR,
                        ref docWordDicList,
                        ref dictionary,
                        dicSize,
                        ref trainingAnswer,
                        ref wordIDFDictionary,
-                       stopWordTable
+                       stopWordTable,
+                       nlpAdapter
                 );
+#if KNN_MODE
             KNN knn = new KNN();
-            knn.set(dicSize,docWordDicList.Count());
-            knn.initial(docWordDicList,dictionary,trainingAnswer);
+            knn.set(dicSize, docWordDicList.Count());
+            knn.initial(docWordDicList, dictionary, trainingAnswer);
             knn.train(3, 20);
             knn.getAveDistance();
 
             //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
-            List<KeyValuePair<int,int>> testAnswer = runKnnTest(knn, @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing", @"D:\work\KPMG\learning\classification\project1_0422\test_data\log", dictionary, wordIDFDictionary, stopWordTable,ref testFileNameList);
-            genStatistic(testAnswer, testFileNameList , @"D:\work\KPMG\learning\classification\project1_0422\log");
+            List<KeyValuePair<int, int>> testAnswer = runKnnTest(knn, TEST_DATA_DIR, TEST_LOG_DIR, dictionary, wordIDFDictionary, stopWordTable, ref testFileNameList, nlpAdapter);
+#else
+            Console.WriteLine("==> Starting get model...");
+            SVMAdapter svmAdapter = new SVMAdapter();
+            svm_model model = svmAdapter.getSVMModel(docWordDicList, dictionary, trainingAnswer, SVMAdapter.SVM_C_DEFAULT, SVMAdapter.SVM_GAMMA_DEFAULT);
+
+            Console.WriteLine("==> Starting SVM test...");
+            List<KeyValuePair<int, int>> testAnswer = runSVMTest(svmAdapter, TEST_DATA_DIR, TEST_LOG_DIR, dictionary, wordIDFDictionary, stopWordTable, ref testFileNameList, model, nlpAdapter);
+            Console.WriteLine("==> Starting SVM test done!!");
+#endif
+            Console.WriteLine("==> Starting saving result...");
+            genStatistic(testAnswer, testFileNameList, LOG_DIR);
         }
 
         private static void genStatistic(List<KeyValuePair<int, int>> testAnswer, List<string> testFileNameList, string logPath)
@@ -67,7 +95,7 @@ namespace project1_0422
             {
                 if (testAnswer[i].Value != last)
                 {
-                    statisticFile.WriteLine(last+","+categoryCorrectCount/categoryCount);
+                    statisticFile.WriteLine(last + "," + categoryCorrectCount / categoryCount);
                     categoryCount = 0;
                     categoryCorrectCount = 0;
                     last = testAnswer[i].Value;
@@ -76,15 +104,15 @@ namespace project1_0422
                 categoryCount += 1;
                 totalCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
                 categoryCorrectCount += (testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0;
-                resultFile.WriteLine(testFileNameList[i]+ "," + testAnswer[i].Key + "," + testAnswer[i].Value + "," + ((testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0));
+                resultFile.WriteLine(testFileNameList[i] + "," + testAnswer[i].Key + "," + testAnswer[i].Value + "," + ((testAnswer[i].Key == testAnswer[i].Value) ? 1 : 0));
             }
             statisticFile.WriteLine(last + "," + categoryCorrectCount / categoryCount);
-            statisticFile.WriteLine("total," + totalCorrectCount/totalCount);
+            statisticFile.WriteLine("total," + totalCorrectCount / totalCount);
             resultFile.Close();
             statisticFile.Close();
         }
 
-        private static List<KeyValuePair<int,int>> runKnnTest(KNN knn, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable,ref List<string> testFileNameList)
+        private static List<KeyValuePair<int, int>> runKnnTest(KNN knn, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable, ref List<string> testFileNameList, NLPAdapter nlpAdapter)
         {
             string[] categories = Directory.GetDirectories(testPath);
             List<KeyValuePair<int, int>> testAnswer = new List<KeyValuePair<int, int>>();
@@ -96,13 +124,34 @@ namespace project1_0422
                 {
                     int testResult = -1;
                     testFileNameList.Add(Path.GetFileName(files[j]));
-                    Dictionary<string, double> docWordDic = readDoc(files[j],stopWordTable);
-                    docWordDic = docCooccurrence(docWordDic,dictionary);
-                    testResult = knn.test(docWordDic,dictionary,wordIDFDictionary);
-                    testAnswer.Add(new KeyValuePair<int,int>(testResult,i));
-                    Console.WriteLine(testResult+","+i);
+                    Dictionary<string, double> docWordDic = readDoc(files[j], stopWordTable, nlpAdapter);
+                    docWordDic = docCooccurrence(docWordDic, dictionary);
+                    testResult = knn.test(docWordDic, dictionary, wordIDFDictionary);
+                    testAnswer.Add(new KeyValuePair<int, int>(testResult, i));
+                    Console.WriteLine(testResult + "," + i);
                 }
             }
+            return testAnswer;
+        }
+
+        private static List<KeyValuePair<int, int>> runSVMTest(SVMAdapter svmAdapter, string testPath, string logPath, Dictionary<string, int> dictionary, Dictionary<string, double> wordIDFDictionary, Hashtable stopWordTable, ref List<string> testFileNameList, svm_model model, NLPAdapter nlpAdapter)
+        {
+            string[] categories = Directory.GetDirectories(testPath);
+            List<KeyValuePair<int, int>> testAnswer = new List<KeyValuePair<int, int>>();
+            for (int i = 0; i < categories.Length; i++) //traverse Categories
+            {
+                Console.WriteLine(categories[i]);
+                string[] files = Directory.GetFiles(categories[i]);
+                for (int j = 0; j < files.Length; j++)
+                {
+                    int testResult = -1;
+                    testFileNameList.Add(Path.GetFileName(files[j]));
+                    testResult = svmAdapter.runSVMTest(readDoc(files[j], stopWordTable, nlpAdapter), dictionary, wordIDFDictionary, model);
+                    testAnswer.Add(new KeyValuePair<int, int>(testResult, i));
+                    Console.WriteLine(testResult + "," + i);
+                }
+            }
+
             return testAnswer;
         }
 
@@ -124,18 +173,18 @@ namespace project1_0422
             return stopwordTable;
         }
 
-        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, int> dictionary,int dicSize, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary,Hashtable stopwordTable)
+        private static void trainModel(string trainPath, string logPath, ref List<Dictionary<string, double>> docWordDicList, ref Dictionary<string, int> dictionary, int dicSize, ref List<int> trainingAnswer, ref Dictionary<string, double> wordIDFDictionary, Hashtable stopwordTable, NLPAdapter nlpAdapter)
         {
             List<Dictionary<string, double>> categoryWordCountList = new List<Dictionary<string, double>>();
             Dictionary<string, int> tempDictionary = new Dictionary<string, int>();
             string[] categories = Directory.GetDirectories(trainPath);
             for (int i = 0; i < categories.Length; i++) //traverse Categories, generate traingAnswer
             {
-                categoryWordCountList.Add(readCategory(categories[i],i, ref docWordDicList, ref trainingAnswer, stopwordTable));
+                categoryWordCountList.Add(readCategory(categories[i], i, ref docWordDicList, ref trainingAnswer, stopwordTable, nlpAdapter));
             }
 
             // generate wordIDFDictionary
-            for(int i=0;i<categoryWordCountList.Count();i++)
+            for (int i = 0; i < categoryWordCountList.Count(); i++)
             {
                 foreach (string word in categoryWordCountList[i].Keys)
                 {
@@ -143,14 +192,15 @@ namespace project1_0422
                     {
                         wordIDFDictionary[word] += 1;
                     }
-                    else 
+                    else
                     {
                         wordIDFDictionary.Add(word, 1);
                     }
                 }
             }
             string[] keys = wordIDFDictionary.Keys.ToArray();
-            for (int i = 0; i < keys.Length;i++ ) 
+
+            for (int i = 0; i < keys.Length; i++)
             {
                 wordIDFDictionary[keys[i]] = Math.Log(categoryWordCountList.Count() / wordIDFDictionary[keys[i]]);
             }
@@ -170,17 +220,17 @@ namespace project1_0422
                 }
                 for (int j = 0; j < words.Length; j++)
                 {
-                    sortedCategoryTFIDF.Add(new KeyValuePair<string,double>(words[j],(categoryWordCountList[i][words[j]] / categoryWordCountSum) * wordIDFDictionary[words[j]]));//category TFIDF
+                    sortedCategoryTFIDF.Add(new KeyValuePair<string, double>(words[j], (categoryWordCountList[i][words[j]] / categoryWordCountSum) * wordIDFDictionary[words[j]]));//category TFIDF
                 }
                 //sortedCategoryTFIDF = categoryWordCountList[i].ToList();
-                sortedCategoryTFIDF.Sort((a,b) => b.Value.CompareTo(a.Value));
+                sortedCategoryTFIDF.Sort((a, b) => b.Value.CompareTo(a.Value));
                 sortedCategoryTFIDFList.Add(sortedCategoryTFIDF);
             }
-            for (int i = 0; i < dicSize*2; i++)
+            for (int i = 0; i < dicSize * 2; i++)
             {
                 for (int j = 0; j < sortedCategoryTFIDFList.Count(); j++)
                 {
-                    if (dicCount >= dicSize*2)
+                    if (dicCount >= dicSize * 2)
                     {
                         break;
                     }
@@ -191,12 +241,13 @@ namespace project1_0422
                         dicCount++;
                     }
                 }
-                if (dicCount >= dicSize*2)
+                if (dicCount >= dicSize * 2)
                 {
                     dicFile.Close();
                     break;
                 }
             }
+
             dictionary = trainCooccurrence(logPath, ref categoryWordCountList, ref docWordDicList, ref wordIDFDictionary, trainingAnswer, tempDictionary, dicSize);
             //generate docWordDicList
             for (int i = 0; i < docWordDicList.Count(); i++)
@@ -223,7 +274,7 @@ namespace project1_0422
             //add co-word to docWordDicList
             for (int i = 0; i < docWordDicList.Count(); i++)
             {
-                docWordDicList[i] = docCooccurrence(docWordDicList[i],tempDictionary);
+                docWordDicList[i] = docCooccurrence(docWordDicList[i], tempDictionary);
             }
 
             //add co-word to categoryWordCountList
@@ -238,7 +289,7 @@ namespace project1_0422
                         {
                             categoryWordCountList[trainingAnswer[i]][words[j]] += 1;
                         }
-                        else 
+                        else
                         {
                             categoryWordCountList[trainingAnswer[i]].Add(words[j], 1);
                         }
@@ -338,15 +389,16 @@ namespace project1_0422
             }
             return docWordDic;
         }
-        private static Dictionary<string, double> readCategory(string path,int categoryIndex,ref List<Dictionary<string, double>> docWordDicList,ref List<int> trainingAnswer,Hashtable stopwordTable)
+
+        private static Dictionary<string, double> readCategory(string path, int categoryIndex, ref List<Dictionary<string, double>> docWordDicList, ref List<int> trainingAnswer, Hashtable stopwordTable, NLPAdapter nlpAdapter)
         {
-            Dictionary<string,double> categoryWordCount = new Dictionary<string,double>();
+            Dictionary<string, double> categoryWordCount = new Dictionary<string, double>();
             Dictionary<string, double> docWordCount = new Dictionary<string, double>();
             string[] docs = Directory.GetFiles(path);
             for (int i = 0; i < docs.Length; i++)
             {
                 trainingAnswer.Add(categoryIndex);
-                docWordCount = readDoc(docs[i], stopwordTable);
+                docWordCount = readDoc(docs[i], stopwordTable, nlpAdapter);
                 docWordDicList.Add(docWordCount);
                 foreach (string word in docWordCount.Keys)
                 {
@@ -371,13 +423,19 @@ namespace project1_0422
             return categoryWordCount;
         }
 
-        private static Dictionary<string, double> readDoc(string path,Hashtable stopwordTable)
+        private static Dictionary<string, double> readDoc(string path, Hashtable stopwordTable, NLPAdapter nlpAdapter)
         {
             Dictionary<string, double> docWordCount = new Dictionary<string, double>();
             StreamReader docFile = new StreamReader(path);
             string line;
 
-            while((line = docFile.ReadLine()) != null)
+            Dictionary<String, String> posTags = new Dictionary<String, String>();
+            posTags.Add(NLPAdapter.POS_TAG_NN, NLPAdapter.POS_TAG_NN);
+            posTags.Add(NLPAdapter.POS_TAG_NNS, NLPAdapter.POS_TAG_NNS);
+            posTags.Add(NLPAdapter.POS_TAG_NNP, NLPAdapter.POS_TAG_NNP);
+            posTags.Add(NLPAdapter.POS_TAG_NNPS, NLPAdapter.POS_TAG_NNPS);
+
+            while ((line = docFile.ReadLine()) != null)
             {
                 if (isColumn(line))
                 {
@@ -489,9 +547,16 @@ namespace project1_0422
                     }
                 }
             }
+
             while (line != null)
             {
-                line = processSpecialField(line,ref docWordCount);
+                line = processSpecialField(line, ref docWordCount);
+
+#if USE_POSTAG
+                // Sango: just left noun.
+                line = nlpAdapter.getFilterResult(line, posTags);
+#endif
+
                 foreach (string iter_word in splitLine(line))
                 {
                     string word = getWord(iter_word, stopwordTable);
@@ -515,12 +580,12 @@ namespace project1_0422
 
         private static IEnumerable<string> splitNewsgroup(string content)
         {
-            return content.Split(new char[]{','});
+            return content.Split(new char[] { ',' });
         }
 
         private static IEnumerable<string> splitPath(string content)
         {
-            return content.Split(new char[]{'!'});
+            return content.Split(new char[] { '!' });
         }
 
 
@@ -528,7 +593,7 @@ namespace project1_0422
         {
             string[] emails = getEmail(line);
             string result;
-            for(int i=0;i<emails.Length;i++)
+            for (int i = 0; i < emails.Length; i++)
             {
                 if (docWordCount.ContainsKey(emails[i]))
                 {
@@ -586,10 +651,10 @@ namespace project1_0422
             return Regex.Split(line, @"[^A-Za-z0-9_\-\.]");
         }
 
-        private static string getWord(string word,Hashtable stopwordTable)
+        private static string getWord(string word, Hashtable stopwordTable)
         {
             Stemmer stemmer = new Stemmer();
-            string result = word.ToLower().Trim(new Char[] { '_', '-','.' });
+            string result = word.ToLower().Trim(new Char[] { '_', '-', '.' });
             double Num;
             bool isNum = double.TryParse(word, out Num);
             if (isNum)
