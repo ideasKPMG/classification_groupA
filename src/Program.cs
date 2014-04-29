@@ -1,5 +1,5 @@
-#define KNN_MODE
-#define USE_POSTAG
+﻿#define KMEANS_MODE
+//#define USE_POSTAG
 
 using System;
 using System.Collections;
@@ -20,13 +20,13 @@ namespace project1_0422
 {
     class Program
     {
-        public static String STOP_WORD_PATH = @"F:\Work\Traning\DataMining\stopword.txt";
-        public static String TRAINING_DATA_DIR = @"F:\Work\Traning\DataMining\test_data\1\Training";
-        public static String TEST_DATA_DIR = @"F:\Work\Traning\DataMining\test_data\1\Testing";
+        public static String STOP_WORD_PATH = @"D:\work\KPMG\learning\project1\stopword.txt";
+        public static String TRAINING_DATA_DIR = @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Training";
+        public static String TEST_DATA_DIR = @"D:\work\KPMG\learning\classification\project1_0422\test_data\1\Testing";
 
-        public static String LOG_DIR = @"F:\Work\Traning\DataMining\Log";
-        public static String TEST_LOG_DIR = @"F:\Work\Traning\DataMining\Log\test_data\log";
-        public static String NLP_MODEL_PATH = @"F:\Work\Traning\DataMining\sharpnlp\SharpNLP-1.0.2529-Bin\Models";
+        public static String LOG_DIR = @"D:\work\KPMG\learning\classification\project1_0422\log";
+        public static String TEST_LOG_DIR = @"D:\work\KPMG\learning\classification\project1_0422\test_data\log";
+        public static String NLP_MODEL_PATH = @"D:\work\KPMG\learning\classification\project1_0422\NLPModels\Models";
 
         public static Dictionary<string, double> weight = new Dictionary<string, double>()
         {
@@ -45,7 +45,7 @@ namespace project1_0422
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(STOP_WORD_PATH);
             List<string> testFileNameList = new List<string>();
-            int dicSize = 100;
+            int dicSize = 40;
 
             Console.WriteLine("==> Starting prepare data...");
             NLPAdapter nlpAdapter = new NLPAdapter(NLP_MODEL_PATH);
@@ -69,7 +69,14 @@ namespace project1_0422
 
             //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
             List<KeyValuePair<int, int>> testAnswer = runKnnTest(knn, TEST_DATA_DIR, TEST_LOG_DIR, dictionary, wordIDFDictionary, stopWordTable, ref testFileNameList, nlpAdapter);
-#else
+#elif KMEANS_MODE
+            KMEANS kmeans = new KMEANS();
+            kmeans.set(dicSize, docWordDicList.Count(),20);
+            kmeans.initial(docWordDicList, dictionary, trainingAnswer);
+            int[] kmeansResult = kmeans.compute();
+            List<Dictionary<int,int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
+            kmeans.genStatistic(LOG_DIR,compareResult);
+#elif SVM_MODE
             Console.WriteLine("==> Starting get model...");
             SVMAdapter svmAdapter = new SVMAdapter();
             svm_model model = svmAdapter.getSVMModel(docWordDicList, dictionary, trainingAnswer, SVMAdapter.SVM_C_DEFAULT, SVMAdapter.SVM_GAMMA_DEFAULT);
@@ -79,10 +86,10 @@ namespace project1_0422
             Console.WriteLine("==> Starting SVM test done!!");
 #endif
             Console.WriteLine("==> Starting saving result...");
-            genStatistic(testAnswer, testFileNameList, LOG_DIR);
+            //genClassifyStatistic(testAnswer, testFileNameList, LOG_DIR);
         }
 
-        private static void genStatistic(List<KeyValuePair<int, int>> testAnswer, List<string> testFileNameList, string logPath)
+        private static void genClassifyStatistic(List<KeyValuePair<int, int>> testAnswer, List<string> testFileNameList, string logPath)
         {
             StreamWriter resultFile = new StreamWriter(logPath + "\\result.csv");
             double totalCorrectCount = 0;
