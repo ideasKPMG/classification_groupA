@@ -1,13 +1,8 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Accord.Controls;
-using Accord.MachineLearning;
-using Accord.Math;
-using Accord.Statistics;
 
 namespace project1_0422
 {
@@ -18,12 +13,17 @@ namespace project1_0422
         int featureSize;
         int docSize;
         int k;
-        KMeans kmeans;
+        internal void set(int dicSize, int p1, int p2)
+        {
+            featureSize = dicSize;
+            docSize = p1;
+            k = p2;
+        }
+
         internal void initial(List<Dictionary<string, double>> docWordDicList, Dictionary<string, int> dictionary, List<int> trainingAnswer)
         {
             feature = new double[docSize][];
             answer = trainingAnswer.ToArray();
-            kmeans = new KMeans(k);
             for (int i = 0; i < docWordDicList.Count(); i++)
             {
                 if (feature[i] == null || feature[i].Length == 0)
@@ -43,52 +43,142 @@ namespace project1_0422
                 }
             }
         }
-        internal void set(int dicSize, int p3, int p4)
-        {
-            featureSize = dicSize;
-            docSize = p3;
-            k = p4;
-        }
+
         internal int[] compute()
         {
-            return kmeans.Compute(feature);
+            int[] docClass;
+            double[][] center = new double[k][];
+            int[] lastdocClass;
+            docClass = knnInitial();
+            lastdocClass = docClass;
+            List<int> deprecatedClass = new List<int>();
+            while (true)
+            {
+                center = getCenter(center,docClass,ref deprecatedClass);
+                docClass = assignDoc(center, ref deprecatedClass);
+                if (compareDocClass(lastdocClass, docClass) == true)
+                {
+                    break;
+                }
+                lastdocClass = docClass;
+            }
+            return docClass;
         }
 
-        internal List<Dictionary<int, int>> compare(int[] kmeansResult, List<int> trainingAnswer)
+        private bool compareDocClass(int[] lastdocClass, int[] docClass)
         {
-            List<Dictionary<int, int>> result = new List<Dictionary<int, int>>();
-            //result.Add(new Dictionary<int, int>());
-            for (int i = 0; i < trainingAnswer.Count(); i++)
+            for (int i = 0; i < docSize; i++)
             {
-                if (result.Count < trainingAnswer[i]+1)
+                if (lastdocClass[i] != docClass[i])
                 {
-                    result.Add(new Dictionary<int, int>());
+                    return false;
                 }
-                if (result[trainingAnswer[i]].ContainsKey(kmeansResult[i]))
+            }
+            return true;
+        }
+
+        private double[][] getCenter(double[][] center,int[] docClass,ref List<int> deprecatedClass)
+        {
+            int[] classSum = new int[k];
+            for (int i = 0; i < k; i++)
+            {
+                if (center[i] == null || center[i].Length == 0)
                 {
-                    result[trainingAnswer[i]][kmeansResult[i]] += 1;
+                    center[i] = new double[featureSize];
                 }
-                else 
+                for (int j = 0; j < featureSize; j++)
                 {
-                    result[trainingAnswer[i]].Add(kmeansResult[i], 1);
+                    center[i][j] = 0;
+                }
+                classSum[i] = 0;
+            }
+            for (int i = 0; i < docSize; i++)
+            {
+                for (int j = 0; j < featureSize; j++)
+                {
+                    center[docClass[i]][j] += feature[i][j];
+                }
+                classSum[docClass[i]] += 1;
+            }
+            for (int i = 0; i < k; i++)
+            {
+                for (int j = 0; j < featureSize; j++)
+                {
+                    if (classSum[i] != 0)
+                    {
+                        center[i][j] = center[i][j] / classSum[i];
+                    }
+                    else
+                    {
+                        if (!deprecatedClass.Contains(i))
+                        {
+                            deprecatedClass.Add(i);
+                        }
+                    }
+                }
+            }
+            return center;
+        }
+
+        private int[] assignDoc(double[][] center, ref List<int> deprecatedClass)
+        {
+            int[] result = new int[docSize];
+            for (int i = 0; i < docSize; i++)
+            {
+                result[i] = assignCenter(feature[i],center,deprecatedClass);
+                if (result[i] == 0)
+                { }
+            }
+            return result;
+        }
+
+        private int assignCenter(double[] docFeature, double[][] center, List<int> deprecatedClass)
+        {
+            int result = 0;
+            double minDistance = Double.MaxValue;
+
+            for (int j = 0; j < k; j++)
+            {
+                if (deprecatedClass.Contains(j))
+                    continue;
+                double distance = getDistance(docFeature, center[j]);
+                if (minDistance > distance)
+                {
+                    minDistance = distance;
+                    result = j;
                 }
             }
             return result;
         }
 
-        internal void genStatistic(string LOG_DIR, List<Dictionary<int, int>> compareResult)
+        private double getDistance(double[] p1, double[] p2)
         {
-            StreamWriter logFile = new StreamWriter(LOG_DIR + "\\kmeans_result.csv");
-            for (int i = 0; i < compareResult.Count; i++)
+            double featureSum = 0.0;
+            for (int i = 0; i < featureSize; i++)
             {
-                List<KeyValuePair<int, int>> sortedResult = compareResult[i].ToList();
-                sortedResult.Sort((a, b) => b.Value.CompareTo(a.Value));
-                for (int j = 0; j < sortedResult.Count; j++)
-                {
-                    logFile.WriteLine(i + "," + sortedResult[j].Key + "," + sortedResult[j].Value);
-                }
+                featureSum += Math.Pow(p1[i] - p2[i], 2);
             }
-            logFile.Close();
+            return Math.Sqrt(featureSum);
+        }
+
+        private int[] knnInitial()
+        {
+            int[] result = new int[docSize];
+            for (int i = 0; i < docSize; i++)
+            {
+                result[i] = i % k;
+            }
+            return result;
+        }
+
+        internal List<Dictionary<int, int>> compare(int[] kmeansResult, List<int> trainingAnswer)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void genStatstiic(string LOG_DIR, List<Dictionary<int, int>> compareResult)
+        {
+            throw new NotImplementedException();
         }
     }
 }

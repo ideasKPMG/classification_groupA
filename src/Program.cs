@@ -1,5 +1,6 @@
-﻿#define KMEANS_MODE
+﻿//#define ACCORD_KMEANS_MODE
 //#define USE_POSTAG
+#define KMEANS_MODE
 
 using System;
 using System.Collections;
@@ -69,13 +70,20 @@ namespace project1_0422
 
             //knn.genLog(@"D:\work\KPMG\learning\classification\project1_0422\log");
             List<KeyValuePair<int, int>> testAnswer = runKnnTest(knn, TEST_DATA_DIR, TEST_LOG_DIR, dictionary, wordIDFDictionary, stopWordTable, ref testFileNameList, nlpAdapter);
-#elif KMEANS_MODE
-            KMEANS kmeans = new KMEANS();
+#elif ACCORD_KMEANS_MODE
+            accordKmeans kmeans = new accordKmeans();
             kmeans.set(dicSize, docWordDicList.Count(),20);
             kmeans.initial(docWordDicList, dictionary, trainingAnswer);
             int[] kmeansResult = kmeans.compute();
             List<Dictionary<int,int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
             kmeans.genStatistic(LOG_DIR,compareResult);
+#elif KMEANS_MODE
+            KMEANS kmeans = new KMEANS();
+            kmeans.set(dicSize, docWordDicList.Count(), 20);
+            kmeans.initial(docWordDicList, dictionary, trainingAnswer);
+            int[] kmeansResult = kmeans.compute();
+            //List<Dictionary<int, int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
+            //kmeans.genStatstiic(LOG_DIR, compareResult);
 #elif SVM_MODE
             Console.WriteLine("==> Starting get model...");
             SVMAdapter svmAdapter = new SVMAdapter();
