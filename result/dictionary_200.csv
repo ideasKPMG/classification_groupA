@@ -1,0 +1,200 @@
+alt.ath,0.0132596197507409
+comp.graph,0.0107387696859521
+comp.os.ms-windows.misc,0.0111453488750015
+comp.sys.ibm.pc.hardwar,0.015087378500325
+comp.sys.mac.hardwar,0.0246628338350035
+comp.windows.x,0.0170336926419169
+misc.forsal,0.0141231675941526
+rec.auto,0.0213551459782284
+rec.motorcycl,0.0249698960598441
+rec.sport.basebal,0.0253855817881599
+rec.sport.hockei,0.0216550841060288
+sci.crypt,0.0146174681642835
+sci.electron,0.0147900131564389
+sci.m,0.0171802538326588
+sci.spac,0.021770194489969
+soc.religion.christian christian@aramis.rutgers.edu,0.016507698465896
+talk.politics.gun,0.00877389088172747
+talk.politics.mideast,0.00969649877273642
+talk.politics.misc,0.00954835862650306
+talk.religion.misc,0.0103424787583032
+alt.ath christian,0.00471453146693011
+comp.graph gif,0.00354105469687233
+pc comp.os.ms-windows.misc,0.00297351161312721
+pc comp.sys.ibm.pc.hardwar,0.00357093367874102
+quadra comp.sys.mac.hardwar,0.00454357776575428
+motif comp.windows.x,0.00419700470870418
+misc.forsal misc.forsale.computers.oth,0.00316648473177059
+rec.autos.tech,0.00322551411973701
+rec.motorcycl dod,0.0172900818024696
+rec.sport.basebal basebal,0.0086028916059875
+rec.sport.hockei playoff,0.00870260898510935
+sci.crypt encrypt,0.00814142803799926
+sci.electron circuit,0.00458857588416044
+rec.food.cook,0.00265263770172417
+sci.astro sci.spac,0.00677294939687925
+christian@aramis.rutgers.edu,0.016507698465896
+waco talk.politics.gun,0.0035638205384091
+talk.politics.mideast isra,0.00370066491363441
+ca.polit talk.politics.misc,0.0030033438013559
+alt.ath talk.religion.misc,0.0046392041740899
+christian alt.ath,0.00471453146693011
+gif comp.graph,0.00354105469687233
+comp.os.ms-windows.misc pc,0.00297351161312721
+comp.sys.ibm.pc.hardwar pc,0.00357093367874102
+comp.sys.mac.hardwar quadra,0.00454357776575428
+comp.windows.x motif,0.00419700470870418
+misc.forsale.computers.oth misc.forsal,0.00316648473177059
+rec.autos.tech rec.auto,0.00322551411973701
+dod rec.motorcycl,0.0172900818024696
+basebal rec.sport.basebal,0.0086028916059875
+playoff rec.sport.hockei,0.00870260898510935
+encrypt sci.crypt,0.00814142803799926
+circuit sci.electron,0.00458857588416044
+rec.food.cook sci.m,0.00265263770172417
+sci.spac sci.astro,0.00677294939687925
+igor.rutgers.edu soc.religion.christian,0.016507698465896
+talk.politics.gun waco,0.0035638205384091
+isra talk.politics.mideast,0.00370066491363441
+talk.politics.misc ca.polit,0.0030033438013559
+talk.religion.misc alt.ath,0.0046392041740899
+alt.ath atheist,0.0041852959635805
+3d comp.graph,0.00269526275357719
+comp.os.ms-windows.app comp.os.ms-windows.misc,0.00278910779215808
+bio comp.sys.ibm.pc.hardwar,0.00304574747750535
+centri comp.sys.mac.hardwar,0.0044137612581613
+comp.windows.x news-mail-gatewai,0.0039456003226601
+pc misc.forsal,0.00278788329645019
+rec.auto rec.autos.tech,0.00322551411973701
+rec.motorcycl bike,0.0154852715934436
+pitcher rec.sport.basebal,0.00609172106487447
+hockei rec.sport.hockei,0.00774770786904587
+sci.crypt clipper,0.00747115039507821
+sci.electron voltag,0.00214922688831525
+sci.m rec.food.cook,0.00265263770172417
+sci.astro,0.00677294939687925
+soc.religion.christian igor.rutgers.edu,0.016507698465896
+fbi talk.politics.gun,0.00332313091231332
+talk.politics.mideast jew,0.00349144004219218
+ca.polit,0.0030033438013559
+christian talk.religion.misc,0.00419444971864517
+atheist alt.ath,0.0041852959635805
+comp.graph 3d,0.00269526275357719
+comp.os.ms-windows.misc comp.os.ms-windows.app,0.00278910779215808
+comp.sys.ibm.pc.hardwar bio,0.00304574747750535
+comp.sys.mac.hardwar centri,0.0044137612581613
+news@athena.mit.edu,0.0039456003226601
+misc.forsal pc,0.00278788329645019
+v6 rec.auto,0.0023979946406946
+bike rec.motorcycl,0.0154852715934436
+rec.sport.basebal pitcher,0.00609172106487447
+rec.sport.hockei hockei,0.00774770786904587
+clipper sci.crypt,0.00747115039507821
+voltag sci.electron,0.00214922688831525
+sci.m geb@cs.pitt.edu,0.00192919105579939
+orbit sci.spac,0.00517646846761486
+christian@aramis.rutgers.edu soc.religion.christian,0.016507698465896
+talk.politics.gun fbi,0.00332313091231332
+jew talk.politics.mideast,0.00349144004219218
+alt.sex talk.politics.misc,0.00279700720431618
+talk.religion.misc christian,0.00419444971864517
+comp.graph pc,0.00266939079247809
+comp.os.ms-windows.app,0.00214376901489858
+motherboard comp.sys.ibm.pc.hardwar,0.00277356722936532
+comp.sys.mac.hardwar iisi,0.00341850136661513
+news@athena.mit.edu comp.windows.x,0.0039456003226601
+misc.forsal misc.forsale.comput,0.00261579173494092
+rec.auto v6,0.0023979946406946
+motorcycl rec.motorcycl,0.00685827879429902
+pitcher,0.00385772983672313
+rec.sport.hockei nhl,0.00735652198381546
+sci.crypt comp.org.eff.talk,0.00648871004237077
+sci.electron amp,0.00194857332067087
+geb@cs.pitt.edu sci.m,0.00192919105579939
+sci.spac orbit,0.00517646846761486
+christian christian@aramis.rutgers.edu,0.0164708097542403
+talk.politics.gun dividian,0.00303211768578339
+soc.culture.turkish talk.politics.mideast,0.00343913382433162
+talk.politics.misc alt.sex,0.00279700720431618
+pc comp.graph,0.00266939079247809
+comp.os.ms-windows.advocaci comp.os.ms-windows.misc,0.00189013916493358
+comp.sys.ibm.pc.hardwar motherboard,0.00277356722936532
+iisi comp.sys.mac.hardwar,0.00341850136661513
+news@athena.mit.edu news-mail-gatewai,0.0039456003226601
+misc.forsale.comput misc.forsal,0.00261579173494092
+toyota rec.auto,0.00236052597443375
+rec.motorcycl motorcycl,0.00685827879429902
+rec.sport.basebal hitter,0.00366971148486414
+nhl rec.sport.hockei,0.00735652198381546
+comp.org.eff.talk sci.crypt,0.00648871004237077
+amp sci.electron,0.00194857332067087
+sci.environ rec.food.cook,0.00180861661481193
+shuttl sci.spac,0.0035074202233839
+igor.rutgers.edu christian@aramis.rutgers.edu,0.0164708097542403
+dividian talk.politics.gun,0.00303211768578339
+talk.politics.mideast soc.culture.turkish,0.00343913382433162
+homosexu talk.politics.misc,0.00254481803015653
+talk.abort,0.00317667540056325
+comp.graph comp.graphics.anim,0.00248554800838154
+comp.os.ms-windows.misc comp.os.ms-windows.advocaci,0.00189013916493358
+comp.sys.ibm.pc.hardwar scsi,0.00275634730199658
+comp.sys.mac.hardwar powerbook,0.00333195702821981
+news-mail-gatewai comp.windows.x,0.0039456003226601
+misc.forsale.computers.oth,0.00260889444857251
+rec.auto toyota,0.00236052597443375
+dod bike,0.00660315029138099
+hitter rec.sport.basebal,0.00366971148486414
+nhl,0.00565438307212975
+comp.org.eff.talk,0.00648871004237077
+comp.os.msdos.programm sci.electron,0.00163558215415702
+sci.environ sci.m,0.00180861661481193
+sci.spac shuttl,0.0035074202233839
+christian@aramis.rutgers.edu christian,0.0164708097542403
+talk.politics.gun survivor,0.00251699585064126
+muslim talk.politics.mideast,0.00307299029930773
+talk.politics.misc homosexu,0.00254481803015653
+talk.abort talk.religion.misc,0.00317667540056325
+alt.ath islam,0.00259259771000144
+comp.graphics.anim comp.graph,0.00248554800838154
+alt.fan.bill-g comp.os.ms-windows.misc,0.0015674324782376
+scsi comp.sys.ibm.pc.hardwar,0.00275634730199658
+powerbook comp.sys.mac.hardwar,0.00333195702821981
+comp.windows.x news@athena.mit.edu,0.0039456003226601
+forsal misc.forsal,0.00249546425515632
+mustang rec.auto,0.00209824531060778
+bike dod,0.00660315029138099
+rec.sport.basebal sox,0.00289907207304267
+playoff,0.00467542075150402
+sci.crypt escrow,0.00443694402106776
+sci.electron comp.os.msdos.programm,0.00163558215415702
+rec.food.cook sci.environ,0.00180861661481193
+henry@zoo.toronto.edu sci.spac,0.00308413361355896
+christian@aramis.rutgers.edu igor.rutgers.edu,0.0164708097542403
+survivor talk.politics.gun,0.00251699585064126
+talk.politics.mideast muslim,0.00307299029930773
+misc.leg talk.politics.misc,0.00251172251343296
+talk.religion.misc talk.abort,0.00317667540056325
+islam alt.ath,0.00259259771000144
+comp.graphics.anim,0.00248554800838154
+comp.os.ms-windows.advocaci alt.fan.bill-g,0.0015674324782376
+isa comp.sys.ibm.pc.hardwar,0.00256224782141368
+quadra,0.00287733061408374
+news-mail-gatewai news@athena.mit.edu,0.0039456003226601
+misc.forsal forsal,0.00249546425515632
+rec.auto mustang,0.00209824531060778
+bmw rec.motorcycl,0.00534223821871713
+sox rec.sport.basebal,0.00289907207304267
+hockei,0.0040511117693653
+escrow sci.crypt,0.00443694402106776
+comp.os.msdos.programm alt.msdos.programm,0.00159469260030309
+sci.m sci.environ,0.00180861661481193
+sci.spac henry@zoo.toronto.edu,0.00308413361355896
+soc.religion.christian,0.0127307068926773
+talk.politics.gun atf,0.00251515398461361
+soc.culture.turkish,0.00283353241914409
+talk.politics.misc misc.leg,0.00251172251343296
+talk.religion.misc talk.politics.misc,0.00279924862029831
+bibl alt.ath,0.00233966134805008
+tiff comp.graph,0.00170243014272708
+alt.fan.bill-g,0.0015674324782376
+comp.sys.ibm.pc.hardwar isa,0.00256224782141368
