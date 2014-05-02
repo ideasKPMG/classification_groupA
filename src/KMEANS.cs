@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace project1_0422
 {
@@ -173,12 +174,62 @@ namespace project1_0422
 
         internal List<Dictionary<int, int>> compare(int[] kmeansResult, List<int> trainingAnswer)
         {
-            throw new NotImplementedException();
+            List<Dictionary<int, int>> result = new List<Dictionary<int, int>>();
+            //result.Add(new Dictionary<int, int>());
+            for (int i = 0; i < trainingAnswer.Count(); i++)
+            {
+                if (result.Count < trainingAnswer[i] + 1)
+                {
+                    result.Add(new Dictionary<int, int>());
+                }
+                if (result[trainingAnswer[i]].ContainsKey(kmeansResult[i]))
+                {
+                    result[trainingAnswer[i]][kmeansResult[i]] += 1;
+                }
+                else
+                {
+                    result[trainingAnswer[i]].Add(kmeansResult[i], 1);
+                }
+            }
+            return result;
         }
 
-        internal void genStatstiic(string LOG_DIR, List<Dictionary<int, int>> compareResult)
+        internal void genStatistic(string LOG_DIR, List<Dictionary<int, int>> compareResult)
         {
-            throw new NotImplementedException();
+            StreamWriter logFile = new StreamWriter(LOG_DIR + "\\my_kmeans_result.csv");
+            for (int i = 0; i < compareResult.Count; i++)
+            {
+                List<KeyValuePair<int, int>> sortedResult = compareResult[i].ToList();
+                sortedResult.Sort((a, b) => b.Value.CompareTo(a.Value));
+                for (int j = 0; j < sortedResult.Count; j++)
+                {
+                    logFile.WriteLine(i + "," + sortedResult[j].Key + "," + sortedResult[j].Value);
+                }
+            }
+            logFile.Close();
+        }
+        internal void dumpFeature(string logPath)
+        {
+            StreamWriter logFile = new StreamWriter(logPath + "\\kmeans_0.csv");
+            int last = 0;
+            for (int i = 0; i < answer.Length; i++)
+            {
+                if (answer[i] != last)
+                {
+                    logFile.Close();
+                    last = answer[i];
+                    logFile = new StreamWriter(logPath + "\\kmeans_" + last + ".csv");
+                }
+                for (int j = 0; j < feature[i].Length; j++)
+                {
+                    if (j != 0)
+                    {
+                        logFile.Write(",");
+                    }
+                    logFile.Write(feature[i][j]);
+                }
+                logFile.Write("\r\n");
+            }
         }
     }
 }

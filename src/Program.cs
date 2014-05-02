@@ -46,7 +46,7 @@ namespace project1_0422
             Dictionary<string, double> wordIDFDictionary = new Dictionary<string, double>();
             Hashtable stopWordTable = genStopwordTable(STOP_WORD_PATH);
             List<string> testFileNameList = new List<string>();
-            int dicSize = 40;
+            int dicSize = 200;
 
             Console.WriteLine("==> Starting prepare data...");
             NLPAdapter nlpAdapter = new NLPAdapter(NLP_MODEL_PATH);
@@ -82,8 +82,10 @@ namespace project1_0422
             kmeans.set(dicSize, docWordDicList.Count(), 20);
             kmeans.initial(docWordDicList, dictionary, trainingAnswer);
             int[] kmeansResult = kmeans.compute();
-            //List<Dictionary<int, int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
-            //kmeans.genStatstiic(LOG_DIR, compareResult);
+            List<Dictionary<int, int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
+            //dumpFeature(LOG_DIR, docWordDicList, dictionary, trainingAnswer);
+            kmeans.genStatistic(LOG_DIR, compareResult);
+            kmeans.dumpFeature(LOG_DIR);
 #elif SVM_MODE
             Console.WriteLine("==> Starting get model...");
             SVMAdapter svmAdapter = new SVMAdapter();
@@ -96,6 +98,24 @@ namespace project1_0422
             Console.WriteLine("==> Starting saving result...");
             //genClassifyStatistic(testAnswer, testFileNameList, LOG_DIR);
         }
+/*        private static void dumpFeature(string LOG_DIR, List<Dictionary<string, double>> docWordDicList, Dictionary<string, int> dictionary, List<int> trainingAnswer)
+        {
+            int last = 0;
+            StreamWriter logFile = new StreamWriter(LOG_DIR + "\\0.csv");
+            for (int i = 0; i < trainingAnswer.Count; i++)
+            {
+                if (last != trainingAnswer[i])
+                {
+                    last = trainingAnswer[i];
+                    logFile.Close();
+                    logFile = new StreamWriter(LOG_DIR + "\\" + last + ".csv");
+                }
+                for (int j = 0; j < dictionary.Count; j++)
+                {
+ 
+                }
+            }
+        }*/
 
         private static void genClassifyStatistic(List<KeyValuePair<int, int>> testAnswer, List<string> testFileNameList, string logPath)
         {
