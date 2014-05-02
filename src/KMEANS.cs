@@ -45,12 +45,12 @@ namespace project1_0422
             }
         }
 
-        internal int[] compute()
+        internal int[] compute(List<int> trainingAnswer)
         {
             int[] docClass;
             double[][] center = new double[k][];
             int[] lastdocClass;
-            docClass = knnInitial();
+            docClass = knnInitial(trainingAnswer);
             lastdocClass = docClass;
             List<int> deprecatedClass = new List<int>();
             while (true)
@@ -162,12 +162,12 @@ namespace project1_0422
             return Math.Sqrt(featureSum);
         }
 
-        private int[] knnInitial()
+        private int[] knnInitial(List<int> trainingAnswer)
         {
             int[] result = new int[docSize];
             for (int i = 0; i < docSize; i++)
             {
-                result[i] = i % k;
+                result[i] = trainingAnswer[i];
             }
             return result;
         }
@@ -211,6 +211,7 @@ namespace project1_0422
         internal void dumpFeature(string logPath)
         {
             StreamWriter logFile = new StreamWriter(logPath + "\\kmeans_0.csv");
+            StreamWriter totalLogFile = new StreamWriter(logPath + "\\kmeans_total.csv");
             int last = 0;
             for (int i = 0; i < answer.Length; i++)
             {
@@ -225,11 +226,15 @@ namespace project1_0422
                     if (j != 0)
                     {
                         logFile.Write(",");
+                        totalLogFile.Write(",");
                     }
                     logFile.Write(feature[i][j]);
+                    totalLogFile.Write(feature[i][j]);
                 }
                 logFile.Write("\r\n");
+                totalLogFile.Write("\r\n");
             }
+            totalLogFile.Close();
         }
     }
 }

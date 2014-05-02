@@ -81,7 +81,7 @@ namespace project1_0422
             KMEANS kmeans = new KMEANS();
             kmeans.set(dicSize, docWordDicList.Count(), 20);
             kmeans.initial(docWordDicList, dictionary, trainingAnswer);
-            int[] kmeansResult = kmeans.compute();
+            int[] kmeansResult = kmeans.compute(trainingAnswer);
             List<Dictionary<int, int>> compareResult = kmeans.compare(kmeansResult, trainingAnswer);
             //dumpFeature(LOG_DIR, docWordDicList, dictionary, trainingAnswer);
             kmeans.genStatistic(LOG_DIR, compareResult);
